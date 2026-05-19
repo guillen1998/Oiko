@@ -17,20 +17,16 @@ jobs:
       - name: Descomprimir proyecto
         run: unzip femontv.zip -d project
 
-      - name: Ver archivos
-        run: ls -R project
-
-      - name: Buscar carpeta real
+      - name: Buscar gradlew
+        id: find_gradle
         run: |
-          cd project
-          find . -name gradlew
+          GRADLE_PATH=$(find project -name gradlew | head -n 1)
+          echo "GRADLE_PATH=$GRADLE_PATH" >> $GITHUB_ENV
 
-      - name: Dar permisos a gradlew
-        run: |
-          cd project/*/
-          chmod +x gradlew
+      - name: Dar permisos
+        run: chmod +x $GRADLE_PATH
 
-      - name: Configurar Java 17
+      - name: Configurar Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -38,11 +34,11 @@ jobs:
 
       - name: Compilar APK
         run: |
-          cd project/*/
+          cd $(dirname $GRADLE_PATH)
           ./gradlew assembleDebug
 
       - name: Subir APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: project/**/app/build/outputs/apk/debug/*.apk
+          path: project/**/build/outputs/apk/debug/*.apk      
